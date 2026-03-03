@@ -12,11 +12,11 @@ agentihub    = agent identities (private — CLAUDE.md, workflows, evaluation)
 
 ## Usage
 
-Agent Hop connector in agentihooks builds these agents into deployable profiles:
+Agent Hub connector in agentihooks builds these agents into deployable profiles:
 
 ```bash
 cd /path/to/agentihooks
-python scripts/agent_hop.py /path/to/agentihub
+python scripts/agent_hub.py /path/to/agentihub
 ```
 
 ## Adding an Agent
