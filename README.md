@@ -10,7 +10,7 @@ agentihooks  = hook system + MCP tools (open-source — guardrails, integrations
 agentihub    = agent identities (private — CLAUDE.md, prompts, evaluation)
 ```
 
-Agenticore provisions agents **directly** from this repo. Each agent is a self-contained package that gets synced to `/app/package/` inside the agenticore container via S3.
+Agenticore provisions agents **directly** from this repo. On startup, agenticore's `agent_mode/initializer.py` clones agentihub, finds the requested agent, and copies its `package/` directory to `/app/package/`.
 
 ## Directory Structure
 
@@ -18,7 +18,7 @@ Agenticore provisions agents **directly** from this repo. Each agent is a self-c
 agents/
 └── <name>/
     ├── agent.yml              # Agent metadata (model, turns, timeout, MCP categories)
-    ├── package/               # Production config — synced to /app/package/
+    ├── package/               # Production config — copied to /app/package/
     │   ├── CLAUDE.md          # Agent system prompt
     │   ├── system.md          # Extended system instructions
     │   ├── .claude/
@@ -37,25 +37,24 @@ agents/
 ## Provisioning Flow
 
 ```
-agentihub/agents/<name>/package/
+AGENTIHUB_URL + AGENTIHUB_AGENT env vars
           │
           ▼
-    Upload to S3 (STORAGE_URL)
+    agenticore agent_mode/initializer.py
+    git clone --depth 1 $AGENTIHUB_URL → /tmp/agentihub-clone/
           │
           ▼
-    agenticore initializer.py
-    syncs S3 → /app/package/
+    Copy agents/<name>/package/ → /app/package/
+    Copy agents/<name>/evaluation/ → /app/evaluation/
           │
           ▼
-    Claude Code runs with
-    /app/package/ as config root
+    Claude Code runs with /app/package/ as config root
 ```
 
-1. Agent packages are uploaded to S3 (per-agent bucket path)
-2. Agenticore's `initializer.py` syncs `{STORAGE_URL}/package/` → `/app/package/` on startup
-3. Claude Code loads CLAUDE.md, settings, prompts, and MCP config from `/app/package/`
-
-In dev mode (`STORAGE_SYNC=false`), the package directory is mounted directly via volume.
+1. Agenticore reads `AGENTIHUB_URL` and `AGENTIHUB_AGENT` env vars
+2. Shallow-clones this repo to `/tmp/agentihub-clone/`
+3. Copies `agents/{name}/package/` → `/app/package/` and `evaluation/` → `/app/evaluation/`
+4. Claude Code loads CLAUDE.md, settings, prompts, and MCP config from `/app/package/`
 
 ## Adding a New Agent
 
@@ -83,7 +82,7 @@ In dev mode (`STORAGE_SYNC=false`), the package directory is mounted directly vi
 
 4. Copy or create `package/.claude/settings.json` with hook wiring and permissions.
 
-5. Upload the package to S3 and configure agenticore to point at it via `STORAGE_URL`.
+5. Set `AGENTIHUB_URL` and `AGENTIHUB_AGENT=myagent` in the agenticore pod environment.
 
 ## Current Agents
 
