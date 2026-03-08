@@ -1,1 +1,11 @@
-{"mcpServers": {}}
+{
+  "mcpServers": {
+    "agentipublish": {
+      "type": "http",
+      "url": "http://agentipublish.agenticore-dev.svc.cluster.local:8400/mcp",
+      "headers": {
+        "Authorization": "Bearer ${AGENTIPUBLISH_API_KEY}"
+      }
+    }
+  }
+}
